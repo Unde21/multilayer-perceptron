@@ -1,7 +1,10 @@
 VENV		= .venv
 PYTHON		= $(VENV)/bin/python3
 
-TRAIN		= datasets/data.csv
+DATA		= datasets/data.csv
+RATIO		?=
+SEED		?=
+# TRAIN		= datasets/data.csv
 # TEST		= datasets/dataset_test.csv
 # WEIGHTS		= weights.json
 
@@ -13,6 +16,10 @@ $(VENV): requirements.txt
 	touch $(VENV)
 
 install: $(VENV)
+
+split: $(VENV)
+	$(PYTHON) split_dataset.py $(DATA) $(if $(RATIO), --ratio $(RATIO)) $(if $(SEED), --seed $(SEED))
+
 
 train: $(VENV)
 	$(PYTHON) logreg_train.py $(TRAIN)
@@ -36,4 +43,4 @@ lint: $(VENV)
 
 re: fclean all
 
-.PHONY: all install lint train predict evaluate clean fclean re
+.PHONY: all install lint split train predict evaluate clean fclean re
