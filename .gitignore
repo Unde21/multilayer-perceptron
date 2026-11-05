@@ -1,2 +1,4 @@
 __pycache__
 .venv
+data_train.csv
+data_valid.csv

@@ -4,8 +4,8 @@ PYTHON		= $(VENV)/bin/python3
 DATA		= datasets/data.csv
 RATIO		?=
 SEED		?=
-# TRAIN		= datasets/data.csv
-# TEST		= datasets/dataset_test.csv
+TRAIN		= datasets/data_train.csv
+VALID		= datasets/data_valid.csv
 # WEIGHTS		= weights.json
 
 all: install
@@ -32,10 +32,10 @@ evaluate: $(VENV)
 
 clean:
 	find . -name "__pycache__" -type d -prune -exec rm -rf {} +
-	rm -rf plots
+	rm -rf $(VALID) $(TRAIN)
+
 
 fclean: clean
-	rm -f $(WEIGHTS) houses.csv
 	rm -rf $(VENV)
 
 lint: $(VENV)

@@ -31,8 +31,7 @@ def load_data(path: str) -> pd.DataFrame:
     """Load a headerless csv dataset into a named DataFrame.
 
     Print an error message and exit with status 1 if the file cannot be
-    read or if its content is invalid.
-    """
+    read or if its content is invalid."""
 
     try:
         if not isinstance(path, str):
@@ -73,8 +72,7 @@ def load_data(path: str) -> pd.DataFrame:
 def check_dataset(df: pd.DataFrame) -> None:
     """Check that features are finite numbers and labels are M or B.
 
-    Raise a ValueError naming the offending column or lines otherwise.
-    """
+    Raise a ValueError naming the offending column or lines otherwise."""
 
     for feature in FEATURES:
         if not pd.api.types.is_numeric_dtype(df[feature]):
