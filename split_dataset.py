@@ -1,6 +1,6 @@
 """Split the dataset into a training set and a validation set."""
 
-from srcs.utils import (load_data, LABEL)
+from srcs.data import (load_data, LABEL)
 import sys
 import argparse
 import pandas as pd
