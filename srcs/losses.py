@@ -3,7 +3,7 @@
 import numpy as np
 
 
-def calc_loss(probs: np.ndarray, y: np.ndarray) -> float:
+def cross_entropy(probs: np.ndarray, y: np.ndarray) -> float:
     """Return the categorical cross-entropy between probs and y.
 
     probs are the softmax outputs and y the one-hot states, both of shape

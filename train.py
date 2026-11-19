@@ -3,8 +3,7 @@
 from srcs.data import (load_data)
 from srcs.preprocessing import (fit_preprocessing, prepare_data)
 from srcs.layers import DenseLayer
-from srcs.activations import (rectified_linear_unit, softmax)
-from srcs.losses import (calc_loss)
+from srcs.losses import (cross_entropy)
 import sys
 import numpy as np
 import argparse
@@ -28,23 +27,23 @@ def create_network(rng, x_train: np.ndarray) -> list:
     of x_train.
     """
 
-    multilayer = [
-        DenseLayer(x_train.shape[1], 24, rectified_linear_unit, rng),
-        DenseLayer(24, 24, rectified_linear_unit, rng),
-        DenseLayer(24, 2, softmax, rng),
+    layers = [
+        DenseLayer(x_train.shape[1], 24, "relu", rng),
+        DenseLayer(24, 24, "relu", rng),
+        DenseLayer(24, 2, "softmax", rng),
     ]
 
-    return multilayer
+    return layers
 
 
-def get_proba(multilayer: list, values: np.ndarray) -> np.ndarray:
+def forward_pass(layers: list, values: np.ndarray) -> np.ndarray:
     """Feedforward: pass values through each layer, in order.
 
     The output of a layer is the input of the next one. Return the
     probabilities of the output layer, of shape (patients, states).
     """
 
-    for layer in multilayer:
+    for layer in layers:
         values = layer.forward(values)
 
     return values
@@ -125,11 +124,11 @@ def main():
     # print(f"x_valid:\n{x_valid}, y_valid:\n{y_valid}")
 
     rng = make_rng(args.seed)
-    multilayer = create_network(rng, x_train)
-    probs = get_proba(multilayer, x_train)
+    layers = create_network(rng, x_train)
+    probs = forward_pass(layers, x_train)
     np.set_printoptions(suppress=True, precision=4)
     print(probs.shape)
-    loss = calc_loss(probs, y_train)
+    loss = cross_entropy(probs, y_train)
     print(loss)
 
 

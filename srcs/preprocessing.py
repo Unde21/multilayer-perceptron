@@ -76,7 +76,6 @@ def fit_features(df: pd.DataFrame,
 
     features_df = df[features]
     norm_params = calc_mean_std(features_df)
-    # x_norm = normalize(features_df, norm_params).to_numpy()
     return norm_params
 
 
