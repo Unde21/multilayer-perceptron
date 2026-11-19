@@ -2,10 +2,52 @@
 
 from srcs.data import (load_data)
 from srcs.preprocessing import (fit_preprocessing, prepare_data)
+from srcs.layers import DenseLayer
+from srcs.activations import (rectified_linear_unit, softmax)
+from srcs.losses import (calc_loss)
 import sys
-import pandas as pd
 import numpy as np
 import argparse
+
+
+def make_rng(seed: int):
+    """Return the random generator shared by the whole training.
+
+    The same seed gives the same weights initialization and shuffles.
+    """
+
+    rng = np.random.default_rng(seed)
+    return rng
+
+
+def create_network(rng, x_train: np.ndarray) -> list:
+    """Build the layers of the network, from input to output.
+
+    Two ReLU hidden layers of 24 neurons, then a softmax output layer
+    with one neuron per state. The input size is the number of features
+    of x_train.
+    """
+
+    multilayer = [
+        DenseLayer(x_train.shape[1], 24, rectified_linear_unit, rng),
+        DenseLayer(24, 24, rectified_linear_unit, rng),
+        DenseLayer(24, 2, softmax, rng),
+    ]
+
+    return multilayer
+
+
+def get_proba(multilayer: list, values: np.ndarray) -> np.ndarray:
+    """Feedforward: pass values through each layer, in order.
+
+    The output of a layer is the input of the next one. Return the
+    probabilities of the output layer, of shape (patients, states).
+    """
+
+    for layer in multilayer:
+        values = layer.forward(values)
+
+    return values
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,7 +106,9 @@ def parse_args() -> argparse.Namespace:
 
 
 def main():
-    """Parse the arguments, then load and prepare both datasets."""
+    """Parse the arguments, prepare both datasets, build the network
+    and compute its loss on the training set.
+    """
 
     args = parse_args()
     df_train, df_valid = (load_data(args.dataset_train),
@@ -79,6 +123,14 @@ def main():
     # print(f"x_train:\n{x_train}, y_train:\n{y_train}")
     x_valid, y_valid = prepare_data(df_valid, params)
     # print(f"x_valid:\n{x_valid}, y_valid:\n{y_valid}")
+
+    rng = make_rng(args.seed)
+    multilayer = create_network(rng, x_train)
+    probs = get_proba(multilayer, x_train)
+    np.set_printoptions(suppress=True, precision=4)
+    print(probs.shape)
+    loss = calc_loss(probs, y_train)
+    print(loss)
 
 
 if __name__ == "__main__":
