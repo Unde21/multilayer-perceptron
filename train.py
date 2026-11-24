@@ -135,21 +135,65 @@ def print_epoch(metrics: dict, epoch: int, epochs: int) -> None:
           color(f"- val_acc: {metrics['val_acc']:.2%}", BOLD))
 
 
+def print_hyperparams(hyperparam: dict, requested_batch: int) -> None:
+    """Print the settings of the training, before the first epoch.
+
+    requested_batch is the value given to --batch, or None. If it was
+    larger than the training set, the reduced size is pointed out.
+    Without a seed, "random" is displayed.
+    """
+
+    warning = ''
+    if (requested_batch is not None
+            and requested_batch > hyperparam["batch_size"]):
+        warning = f"(reduced from {requested_batch})"
+
+    print(f"{'batch size':<15}: {hyperparam['batch_size']} {warning}")
+    print(f"{'learning rate':<15}: {hyperparam['learning_rate']}")
+    print(f"{'epochs':<15}: {hyperparam['epochs']}")
+
+    seed = f"{hyperparam['seed']}"
+    if hyperparam["seed"] is None:
+        seed = 'random'
+    print(f"{'seed':<15}: {seed}\n")
+
+
+def train_epoch(layers: list, x: np.ndarray, y: np.ndarray,
+                hyperparams: dict, rng) -> None:
+    """Train the network on every patient once, batch by batch.
+
+    The patients are shuffled, then split in batches of "batch_size"
+    patients (the last one may be smaller). For each batch: forward
+    pass, backward pass, then update of the weights with "learning_rate".
+    x and y follow the same order, so each patient keeps its state.
+    """
+
+    order = rng.permutation(x.shape[0])
+    for start in range(0, x.shape[0], hyperparams["batch_size"]):
+        batch_indices = order[start: start + hyperparams["batch_size"]]
+        x_batch, y_batch = x[batch_indices], y[batch_indices]
+        probs_batch = forward_pass(layers, x_batch)
+        backward_pass(layers, probs_batch, y_batch)
+        for layer in layers:
+            layer.update(hyperparams["learning_rate"])
+
+
 def main():
     """Parse the arguments, prepare both datasets, build the network
-    and train it with gradient descent on the whole training set.
+    and train it with gradient descent.
 
-    Each epoch displays the loss and the accuracy on both sets. The
-    validation set is only measured: it never updates the weights, and
-    its forward pass comes after the backward pass, since it overwrites
-    the x and z kept by the layers.
+    Without --batch, or if it is too large, each batch is the whole
+    training set. After each epoch, the loss and the accuracy are
+    measured on both sets with the same weights, then displayed. The
+    validation set never updates the weights.
     """
 
     args = parse_args()
     df_train, df_valid = (load_data(args.dataset_train),
                           load_data(args.dataset_valid))
 
-    if args.batch is not None and args.batch > df_train.shape[0]:
+    requested_batch = args.batch
+    if args.batch is None or args.batch > df_train.shape[0]:
         args.batch = df_train.shape[0]
 
     params = fit_preprocessing(df_train)
@@ -159,17 +203,21 @@ def main():
     rng = make_rng(args.seed)
     layers = create_network(rng, x_train)
 
-    np.set_printoptions(suppress=True, precision=4)
-
     print(f"x_train shape : {x_train.shape}")
     print(f"x_valid shape : {x_valid.shape}\n")
 
+    hyperparams = {
+        "batch_size": args.batch,
+        "learning_rate": args.learning_rate,
+        "epochs": args.epochs,
+        "seed": args.seed
+    }
+    print_hyperparams(hyperparams, requested_batch)
+
     for epoch in range(1, args.epochs + 1):
+        train_epoch(layers, x_train, y_train, hyperparams, rng)
         probs = forward_pass(layers, x_train)
         loss = cross_entropy(probs, y_train)
-        backward_pass(layers, probs, y_train)
-        for layer in layers:
-            layer.update(args.learning_rate)
         val_probs = forward_pass(layers, x_valid)
         val_loss = cross_entropy(val_probs, y_valid)
         acc = accuracy(probs, y_train)
