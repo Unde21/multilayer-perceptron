@@ -35,7 +35,7 @@ class DenseLayer():
                   file=sys.stderr)
             sys.exit(1)
 
-    def forward(self, x: np.ndarray):
+    def forward(self, x: np.ndarray) -> np.ndarray:
         """Return activation(x @ weights + bias).
 
         x has the shape (patients, n_inputs) and the result
@@ -47,7 +47,7 @@ class DenseLayer():
         output = self.activation(self.z)
         return output
 
-    def backward(self, d_output: np.ndarray):
+    def backward(self, d_output: np.ndarray) -> np.ndarray:
         """Compute the gradients of the layer from the next layer's error.
 
         d_output is the error on the output of this layer, of shape
@@ -66,3 +66,12 @@ class DenseLayer():
         self.d_weights = self.x.T @ d_z
         self.d_bias = np.sum(d_z, axis=0)
         return (d_z @ self.weights.T)
+
+    def update(self, learning_rate) -> None:
+        """Gradient descent: move weights and bias against their gradients.
+
+        Use the gradients stored by the last call to backward.
+        """
+
+        self.weights = self.weights - learning_rate * self.d_weights
+        self.bias = self.bias - learning_rate * self.d_bias

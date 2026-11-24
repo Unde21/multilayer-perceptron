@@ -49,6 +49,19 @@ def forward_pass(layers: list, values: np.ndarray) -> np.ndarray:
     return values
 
 
+def backward_pass(layers: list, probs: np.ndarray, y: np.ndarray) -> None:
+    """Backpropagation: send the error back through each layer, in reverse.
+
+    The error starts at (probs - y) / patients on the output layer, then
+    each layer receives the error returned by the next one. Every layer
+    stores its gradients; the weights are not modified here.
+    """
+
+    error = (probs - y) / len(y)
+    for layer in reversed(layers):
+        error = layer.backward(error)
+
+
 def parse_args() -> argparse.Namespace:
     """Parse and check the command line arguments.
 
@@ -106,7 +119,7 @@ def parse_args() -> argparse.Namespace:
 
 def main():
     """Parse the arguments, prepare both datasets, build the network
-    and compute its loss on the training set.
+    and train it with gradient descent on the whole training set.
     """
 
     args = parse_args()
@@ -125,11 +138,18 @@ def main():
 
     rng = make_rng(args.seed)
     layers = create_network(rng, x_train)
-    probs = forward_pass(layers, x_train)
+
     np.set_printoptions(suppress=True, precision=4)
-    print(probs.shape)
-    loss = cross_entropy(probs, y_train)
-    print(loss)
+
+    for epoch in range(1, args.epochs + 1):
+        probs = forward_pass(layers, x_train)
+        # print(probs.shape)
+        loss = cross_entropy(probs, y_train)
+        print(loss)
+
+        backward_pass(layers, probs, y_train)
+        for layer in layers:
+            layer.update(args.learning_rate)
 
 
 if __name__ == "__main__":
