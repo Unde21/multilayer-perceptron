@@ -6,22 +6,9 @@ from train import (create_network, forward_pass, backward_pass, make_rng)
 from srcs.data import (load_data)
 from srcs.preprocessing import (fit_preprocessing, prepare_data)
 from srcs.losses import (cross_entropy)
+from srcs.display import (BOLD, GREEN, DIM, RED, color)
 
 THRESHOLD = 1e-7
-
-GREEN = "\033[32m"
-RED = "\033[31m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
-RESET = "\033[0m"
-
-
-def color(text: str, *codes: str) -> str:
-    """Wrap text in color codes, only if the output is a terminal."""
-
-    if not sys.stdout.isatty():
-        return text
-    return f"{''.join(codes)}{text}{RESET}"
 
 
 def forward_loss(layers: list, x_train: np.ndarray,

@@ -3,7 +3,8 @@
 from srcs.data import (load_data)
 from srcs.preprocessing import (fit_preprocessing, prepare_data)
 from srcs.layers import DenseLayer
-from srcs.losses import (cross_entropy)
+from srcs.losses import (cross_entropy, accuracy)
+from srcs.display import (BOLD, DIM, color)
 import sys
 import numpy as np
 import argparse
@@ -117,9 +118,31 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
+def print_epoch(metrics: dict, epoch: int, epochs: int) -> None:
+    """Print the results of one epoch on a single line.
+
+    metrics holds "loss" and "acc" for the training set, "val_loss" and
+    "val_acc" for the validation set; the accuracies are between 0 and 1
+    and displayed in percent. The epoch number is padded with zeros to
+    the width of epochs, the total number of epochs.
+    """
+
+    size = len(str(epochs))
+    print(color(f"epoch {epoch:0{size}d}/{epochs}", DIM),
+          f"- loss: {metrics['loss']:.4f}",
+          color(f"- val_loss: {metrics['val_loss']:.4f}", BOLD),
+          f"- acc: {metrics['acc']:.2%}",
+          color(f"- val_acc: {metrics['val_acc']:.2%}", BOLD))
+
+
 def main():
     """Parse the arguments, prepare both datasets, build the network
     and train it with gradient descent on the whole training set.
+
+    Each epoch displays the loss and the accuracy on both sets. The
+    validation set is only measured: it never updates the weights, and
+    its forward pass comes after the backward pass, since it overwrites
+    the x and z kept by the layers.
     """
 
     args = parse_args()
@@ -130,26 +153,34 @@ def main():
         args.batch = df_train.shape[0]
 
     params = fit_preprocessing(df_train)
-    # print(f"params:\n{params}")
     x_train, y_train = prepare_data(df_train, params)
-    # print(f"x_train:\n{x_train}, y_train:\n{y_train}")
     x_valid, y_valid = prepare_data(df_valid, params)
-    # print(f"x_valid:\n{x_valid}, y_valid:\n{y_valid}")
 
     rng = make_rng(args.seed)
     layers = create_network(rng, x_train)
 
     np.set_printoptions(suppress=True, precision=4)
 
+    print(f"x_train shape : {x_train.shape}")
+    print(f"x_valid shape : {x_valid.shape}\n")
+
     for epoch in range(1, args.epochs + 1):
         probs = forward_pass(layers, x_train)
-        # print(probs.shape)
         loss = cross_entropy(probs, y_train)
-        print(loss)
-
         backward_pass(layers, probs, y_train)
         for layer in layers:
             layer.update(args.learning_rate)
+        val_probs = forward_pass(layers, x_valid)
+        val_loss = cross_entropy(val_probs, y_valid)
+        acc = accuracy(probs, y_train)
+        val_acc = accuracy(val_probs, y_valid)
+        metrics = {
+            "loss": loss,
+            "val_loss": val_loss,
+            "acc": acc,
+            "val_acc": val_acc
+        }
+        print_epoch(metrics, epoch, args.epochs)
 
 
 if __name__ == "__main__":
