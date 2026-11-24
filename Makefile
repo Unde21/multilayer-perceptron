@@ -38,6 +38,9 @@ split: $(VENV)
 train: $(VENV)
 	$(PYTHON) train.py $(TRAIN) $(VALID) $(TRAIN_ARGS)
 
+gradient_check: $(VENV)
+	$(PYTHON) gradient_check.py
+
 predict: $(VENV)
 	$(PYTHON) logreg_predict.py $(TEST) $(WEIGHTS)
 
@@ -56,14 +59,15 @@ re: fclean all
 
 help:
 	@echo "Targets:"
-	@echo "  make install       create the virtual environment and install dependencies"
-	@echo "  make split         split $(DATA) into a training and a validation set"
-	@echo "  make train         train the multilayer perceptron"
-	@echo "  make predict       evaluate the saved model on a dataset"
-	@echo "  make lint          check code style with flake8"
-	@echo "  make clean         remove caches and generated datasets"
-	@echo "  make fclean        clean + remove the virtual environment"
-	@echo "  make re            fclean + install"
+	@echo "  make install         create the virtual environment and install dependencies"
+	@echo "  make split           split $(DATA) into a training and a validation set"
+	@echo "  make train           train the multilayer perceptron"
+	@echo "  make gradient_check  check the backpropagation against numerical gradients"
+	@echo "  make predict         evaluate the saved model on a dataset"
+	@echo "  make lint            check code style with flake8"
+	@echo "  make clean           remove caches and generated datasets"
+	@echo "  make fclean          clean + remove the virtual environment"
+	@echo "  make re              fclean + install"
 	@echo ""
 	@echo "Options (passed as VARIABLE=value):"
 	@echo "  split   RATIO SEED"
@@ -74,8 +78,8 @@ help:
 	@echo "  make train BATCH=8 EPOCHS=100 LEARNING_RATE=0.03 SEED=42"
 	@echo ""
 	@echo "Details of each option:"
-	@echo "  make help-split    full help of split_dataset.py"
-	@echo "  make help-train    full help of train.py"
+	@echo "  make help-split      full help of split_dataset.py"
+	@echo "  make help-train      full help of train.py"
 
 help-split: $(VENV)
 	@$(PYTHON) split_dataset.py --help
@@ -84,4 +88,4 @@ help-train: $(VENV)
 	@$(PYTHON) train.py --help
 
 .PHONY: all install lint split train predict clean fclean re \
-		help help-split help-train
+		help help-split help-train gradient_check
