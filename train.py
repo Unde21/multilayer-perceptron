@@ -5,6 +5,7 @@ from srcs.preprocessing import (fit_preprocessing, prepare_data)
 from srcs.layers import DenseLayer
 from srcs.losses import (cross_entropy, accuracy)
 from srcs.display import (BOLD, DIM, color)
+from srcs.plots import (plot_history)
 import sys
 import numpy as np
 import argparse
@@ -185,7 +186,8 @@ def main():
     Without --batch, or if it is too large, each batch is the whole
     training set. After each epoch, the loss and the accuracy are
     measured on both sets with the same weights, then displayed. The
-    validation set never updates the weights.
+    validation set never updates the weights. The learning curves are
+    plotted at the end.
     """
 
     args = parse_args()
@@ -214,6 +216,7 @@ def main():
     }
     print_hyperparams(hyperparams, requested_batch)
 
+    history = []
     for epoch in range(1, args.epochs + 1):
         train_epoch(layers, x_train, y_train, hyperparams, rng)
         probs = forward_pass(layers, x_train)
@@ -228,7 +231,10 @@ def main():
             "acc": acc,
             "val_acc": val_acc
         }
+        history.append(metrics)
         print_epoch(metrics, epoch, args.epochs)
+
+    plot_history(history)
 
 
 if __name__ == "__main__":
