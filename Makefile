@@ -10,6 +10,7 @@ SEED			?=
 BATCH			?=
 LEARNING_RATE	?=
 EPOCHS			?=
+LAYER			?=
 
 # WEIGHTS		= weights.json
 
@@ -19,7 +20,8 @@ SPLIT_ARGS	= $(if $(RATIO), --ratio $(RATIO)) \
 TRAIN_ARGS	= $(if $(BATCH), --batch $(BATCH)) \
 			  $(if $(SEED), --seed $(SEED)) \
 			  $(if $(LEARNING_RATE), --learning_rate $(LEARNING_RATE)) \
-			  $(if $(EPOCHS), --epochs $(EPOCHS))
+			  $(if $(EPOCHS), --epochs $(EPOCHS)) \
+			  $(if $(LAYER), --layer $(LAYER))
 
 
 all: install
@@ -71,11 +73,12 @@ help:
 	@echo ""
 	@echo "Options (passed as VARIABLE=value):"
 	@echo "  split   RATIO SEED"
-	@echo "  train   BATCH SEED LEARNING_RATE EPOCHS"
+	@echo "  train   BATCH SEED LEARNING_RATE EPOCHS LAYER"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make split RATIO=0.75 SEED=42"
 	@echo "  make train BATCH=8 EPOCHS=100 LEARNING_RATE=0.03 SEED=42"
+	@echo "  make train LAYER=\"24 24 24\"   (quotes needed for several layers)"
 	@echo ""
 	@echo "Details of each option:"
 	@echo "  make help-split      full help of split_dataset.py"

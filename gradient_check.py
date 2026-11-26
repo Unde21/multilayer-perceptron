@@ -33,7 +33,7 @@ def gradient_check(seed: int) -> tuple[int, float]:
 
     params = fit_preprocessing(df_train)
     x_train, y_train = prepare_data(df_train, params)
-    layers = create_network(rng, x_train)
+    layers = create_network(rng, x_train, [24, 24])
 
     probs = forward_pass(layers, x_train[:8])
     backward_pass(layers, probs, y_train[:8])

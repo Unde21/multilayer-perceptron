@@ -21,20 +21,23 @@ def make_rng(seed: int):
     return rng
 
 
-def create_network(rng, x_train: np.ndarray) -> list:
+def create_network(rng, x_train: np.ndarray, hidden_sizes: list) -> list:
     """Build the layers of the network, from input to output.
 
-    Two ReLU hidden layers of 24 neurons, then a softmax output layer
-    with one neuron per state. The input size is the number of features
-    of x_train.
+    hidden_sizes gives the number of neurons of each ReLU hidden layer,
+    in order (for example [24, 24]). The input size of each layer is the
+    output size of the previous one, starting from the number of
+    features of x_train. A softmax output layer with one neuron per
+    state is added at the end.
     """
 
-    layers = [
-        DenseLayer(x_train.shape[1], 24, "relu", rng),
-        DenseLayer(24, 24, "relu", rng),
-        DenseLayer(24, 2, "softmax", rng),
-    ]
+    layers = []
 
+    previous_size = x_train.shape[1]
+    for i in hidden_sizes:
+        layers.append(DenseLayer(previous_size, i, "relu", rng))
+        previous_size = i
+    layers.append(DenseLayer(previous_size, 2, "softmax", rng))
     return layers
 
 
@@ -81,7 +84,9 @@ def parse_args() -> argparse.Namespace:
                " datasets/data_valid.csv --batch 8\n"
                "  python3 train.py datasets/data_train.csv"
                " datasets/data_valid.csv --epochs 100"
-               " --learning_rate 0.03 --seed 42",
+               " --learning_rate 0.03 --seed 42\n"
+               "  python3 train.py datasets/data_train.csv"
+               " datasets/data_valid.csv --layer 24 24 24",
         formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("dataset_train",
                         help="path to the training .csv file.")
@@ -107,6 +112,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=100,
                         help="number of passes over the whole training set"
                              " (default: 100).")
+    parser.add_argument("--layer", type=int, nargs="+", default=[24, 24],
+                        metavar="NEURONS",
+                        help="number of neurons of each hidden layer,"
+                             " from input to output\n"
+                             "(default: 24 24, two hidden layers of 24"
+                             " neurons).\n"
+                             "The input and output layers are set by the"
+                             " data:\n"
+                             "one neuron per feature, one per state.")
 
     args = parser.parse_args()
     if args.batch is not None and args.batch < 1:
@@ -115,7 +129,10 @@ def parse_args() -> argparse.Namespace:
         parser.error("--learning_rate must be > 0.")
     if args.epochs < 1:
         parser.error("--epochs must be >= 1.")
-
+    for layer in args.layer:
+        if layer > 1000 or layer < 1:
+            parser.error(f"--layer: invalid size {layer}, each hidden layer"
+                         " must have between 1 and 1000 neurons.")
     return args
 
 
@@ -203,7 +220,7 @@ def main():
     x_valid, y_valid = prepare_data(df_valid, params)
 
     rng = make_rng(args.seed)
-    layers = create_network(rng, x_train)
+    layers = create_network(rng, x_train, args.layer)
 
     print(f"x_train shape : {x_train.shape}")
     print(f"x_valid shape : {x_valid.shape}\n")
