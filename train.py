@@ -7,6 +7,7 @@ from srcs.losses import (cross_entropy, accuracy)
 from srcs.display import (BOLD, DIM, color)
 from srcs.plots import (plot_history)
 from srcs.activations import (ACTIVATIONS)
+from srcs.model import (save_model)
 import sys
 import numpy as np
 import argparse
@@ -79,7 +80,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Train a multilayer perceptron on the training set,"
                     " evaluate it\non the validation set and save the model"
-                    " to weights.json.",
+                    " to a JSON file.",
         epilog="examples:\n"
                "  python3 train.py datasets/data_train.csv"
                " datasets/data_valid.csv\n"
@@ -131,6 +132,11 @@ def parse_args() -> argparse.Namespace:
                         help="activation function of the hidden layers"
                              " (default: relu).\n"
                              "The output layer always uses softmax.")
+    parser.add_argument("--model", default="./saved_model.json",
+                        metavar="PATH",
+                        help="file where the trained model is saved, to be"
+                             " used by predict\n"
+                             "(default: ./saved_model.json).")
 
     args = parser.parse_args()
     if args.batch is not None and args.batch < 1:
@@ -143,6 +149,7 @@ def parse_args() -> argparse.Namespace:
         if layer > 1000 or layer < 1:
             parser.error(f"--layer: invalid size {layer}, each hidden layer"
                          " must have between 1 and 1000 neurons.")
+
     return args
 
 
@@ -265,6 +272,7 @@ def main():
         history.append(metrics)
         print_epoch(metrics, epoch, args.epochs)
 
+    save_model(params, layers, args.model)
     plot_history(history)
 
 

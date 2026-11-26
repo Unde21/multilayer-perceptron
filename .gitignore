@@ -3,3 +3,4 @@ __pycache__
 data_train.csv
 data_valid.csv
 test.txt
+saved_model.json

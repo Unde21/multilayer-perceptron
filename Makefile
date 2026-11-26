@@ -12,8 +12,8 @@ LEARNING_RATE	?=
 EPOCHS			?=
 LAYER			?=
 ACTIVATION		?=
+MODEL			?=
 
-# WEIGHTS		= weights.json
 
 SPLIT_ARGS	= $(if $(RATIO), --ratio $(RATIO)) \
 			  $(if $(SEED), --seed $(SEED))
@@ -23,7 +23,8 @@ TRAIN_ARGS	= $(if $(BATCH), --batch $(BATCH)) \
 			  $(if $(LEARNING_RATE), --learning_rate $(LEARNING_RATE)) \
 			  $(if $(EPOCHS), --epochs $(EPOCHS)) \
 			  $(if $(LAYER), --layer $(LAYER)) \
-			  $(if $(ACTIVATION), --activation $(ACTIVATION))
+			  $(if $(ACTIVATION), --activation $(ACTIVATION)) \
+			  $(if $(MODEL), --model $(MODEL))
 
 
 all: install
@@ -75,13 +76,14 @@ help:
 	@echo ""
 	@echo "Options (passed as VARIABLE=value):"
 	@echo "  split   RATIO SEED"
-	@echo "  train   BATCH SEED LEARNING_RATE EPOCHS LAYER ACTIVATION"
+	@echo "  train   BATCH SEED LEARNING_RATE EPOCHS LAYER ACTIVATION MODEL"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make split RATIO=0.75 SEED=42"
 	@echo "  make train BATCH=8 EPOCHS=100 LEARNING_RATE=0.03 SEED=42"
 	@echo "  make train LAYER=\"24 24 24\"   (quotes needed for several layers)"
 	@echo "  make train ACTIVATION=sigmoid BATCH=8"
+	@echo "  make train MODEL=./sigmoid_model.json ACTIVATION=sigmoid"
 	@echo ""
 	@echo "Details of each option:"
 	@echo "  make help-split      full help of split_dataset.py"
