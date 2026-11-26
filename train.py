@@ -6,6 +6,7 @@ from srcs.layers import DenseLayer
 from srcs.losses import (cross_entropy, accuracy)
 from srcs.display import (BOLD, DIM, color)
 from srcs.plots import (plot_history)
+from srcs.activations import (ACTIVATIONS)
 import sys
 import numpy as np
 import argparse
@@ -21,21 +22,23 @@ def make_rng(seed: int):
     return rng
 
 
-def create_network(rng, x_train: np.ndarray, hidden_sizes: list) -> list:
+def create_network(rng, x_train: np.ndarray, hidden_sizes: list,
+                   activation: str) -> list:
     """Build the layers of the network, from input to output.
 
-    hidden_sizes gives the number of neurons of each ReLU hidden layer,
-    in order (for example [24, 24]). The input size of each layer is the
-    output size of the previous one, starting from the number of
-    features of x_train. A softmax output layer with one neuron per
-    state is added at the end.
+    hidden_sizes gives the number of neurons of each hidden layer, in
+    order (for example [24, 24]), and activation their activation name
+    ("relu" or "sigmoid"). The input size of each layer is the output
+    size of the previous one, starting from the number of features of
+    x_train. A softmax output layer with one neuron per state is added
+    at the end.
     """
 
     layers = []
 
     previous_size = x_train.shape[1]
     for i in hidden_sizes:
-        layers.append(DenseLayer(previous_size, i, "relu", rng))
+        layers.append(DenseLayer(previous_size, i, activation, rng))
         previous_size = i
     layers.append(DenseLayer(previous_size, 2, "softmax", rng))
     return layers
@@ -121,6 +124,13 @@ def parse_args() -> argparse.Namespace:
                              "The input and output layers are set by the"
                              " data:\n"
                              "one neuron per feature, one per state.")
+    hidden_activations = [name for name, (_, derivative)
+                          in ACTIVATIONS.items() if derivative is not None]
+    parser.add_argument("--activation", default="relu",
+                        choices=hidden_activations,
+                        help="activation function of the hidden layers"
+                             " (default: relu).\n"
+                             "The output layer always uses softmax.")
 
     args = parser.parse_args()
     if args.batch is not None and args.batch < 1:
@@ -166,9 +176,11 @@ def print_hyperparams(hyperparam: dict, requested_batch: int) -> None:
             and requested_batch > hyperparam["batch_size"]):
         warning = f"(reduced from {requested_batch})"
 
+    print(f"{'epochs':<15}: {hyperparam['epochs']}")
     print(f"{'batch size':<15}: {hyperparam['batch_size']} {warning}")
     print(f"{'learning rate':<15}: {hyperparam['learning_rate']}")
-    print(f"{'epochs':<15}: {hyperparam['epochs']}")
+    print(f"{'hidden layers':<15}: {hyperparam['hidden_sizes']}")
+    print(f"{'activation':<15}: {hyperparam['activation']}")
 
     seed = f"{hyperparam['seed']}"
     if hyperparam["seed"] is None:
@@ -220,7 +232,7 @@ def main():
     x_valid, y_valid = prepare_data(df_valid, params)
 
     rng = make_rng(args.seed)
-    layers = create_network(rng, x_train, args.layer)
+    layers = create_network(rng, x_train, args.layer, args.activation)
 
     print(f"x_train shape : {x_train.shape}")
     print(f"x_valid shape : {x_valid.shape}\n")
@@ -229,7 +241,9 @@ def main():
         "batch_size": args.batch,
         "learning_rate": args.learning_rate,
         "epochs": args.epochs,
-        "seed": args.seed
+        "seed": args.seed,
+        "hidden_sizes": args.layer,
+        "activation": args.activation
     }
     print_hyperparams(hyperparams, requested_batch)
 
